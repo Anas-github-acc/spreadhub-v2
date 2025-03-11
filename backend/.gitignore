@@ -4,36 +4,24 @@ venv/
 env/
 ENV/
 
-# Python cache files
-__pycache__/
-*.py[cod]
-*$py.class
+__pycache__
+app.egg-info
+*.pyc
+.mypy_cache
+.coverage
+htmlcov
+.cache
+.venv
 
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
-*.egg
 
 # IDE/Editor
 .idea/
 .vscode/
-*.swp
-*.swo
-
-# Operating System
-.DS_Store
-Thumbs.db
 
 # Logs
 logs/
-*.log
+*.logs
 
-# Coverage and test
-.coverage
-coverage/
-.pytest_cache/
-htmlcov/
 
 # FastAPI specific
 .fastapi_cache/
@@ -41,7 +29,3 @@ htmlcov/
 # UV specific
 .uv/
 .uvdata/
-
-# Local development
-*.db
-*.sqlite3

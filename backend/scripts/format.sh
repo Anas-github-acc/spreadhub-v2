@@ -1,5 +1,5 @@
 #!/bin/sh e-
-set -x
+set -x # this will output the commands being run
 
 ruff check app scripts --fix
 ruff format app scripts

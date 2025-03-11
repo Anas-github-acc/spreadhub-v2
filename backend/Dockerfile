@@ -1,18 +1,20 @@
-FROM python:3.13-alpine
+FROM python:3.12
 
 # setting workking directory
 WORKDIR /app/
 
-# ------------------------------------------------------------------------------
+# Install system dependencies required for Python packages
+# RUN apk add --no-cache gcc musl-dev python3-dev
+
 # Install uv from the official image
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
-# ------------------------------------------------------------------------------
-COPY --from=ghcr.io/astral-sh/uv:0.5.30 /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.5.29 /uv /bin/uv
+RUN chmod +x /bin/uv
 
 # setting the environment variable
 ENV PATH="/app/.venv/bin:$PATH" \
-UV_COMPILE_BYTECODE=1 \
-UV_LINK_MODE=copy
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
 # ------------------------------------------------------------------------------
 # Pre-install dependencies (without installing the project) using uv.
@@ -35,7 +37,7 @@ ENV PYTHONPATH=/app
 # - Application source code
 # ------------------------------------------------------------------------------
 COPY ./scripts /app/scripts
-COPY ./pyproject.toml ./uv.lock ./alembic.ini /app/
+COPY ./pyproject.toml ./uv.lock /app/
 COPY ./app /app/app
 
 # ------------------------------------------------------------------------------
@@ -43,13 +45,15 @@ COPY ./app /app/app
 # this will pick up any changes in your source code or dependency configuration.
 # ------------------------------------------------------------------------------
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync
+    uv sync -v
 
-# EXpose the port
+# Expose the port
 EXPOSE 8000
 
 
 # command to run the application
-CMD ["fastapi", "dev", "app/main.py"]
+# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["fastapi", "run", "--workers", "4", "app/main.py"]
+# CMD ["fastapi", "dev", "app/main.py"]
 
 
