@@ -1,59 +1,41 @@
-FROM python:3.12
+# Stage 1: Build dependencies
+FROM python:3.12-alpine AS builder
 
-# setting workking directory
-WORKDIR /app/
+WORKDIR /app
 
-# Install system dependencies required for Python packages
-# RUN apk add --no-cache gcc musl-dev python3-dev
-
-# Install uv from the official image
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
+# Install uv
 COPY --from=ghcr.io/astral-sh/uv:0.5.29 /uv /bin/uv
 RUN chmod +x /bin/uv
 
-# setting the environment variable
+# Set environment variables
 ENV PATH="/app/.venv/bin:$PATH" \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 
-# ------------------------------------------------------------------------------
-# Pre-install dependencies (without installing the project) using uv.
-# This leverages Docker cache so that changes in the project code don't force re-installation of dependencies.
-# ------------------------------------------------------------------------------
+# Copy dependency files first for caching
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies in one step
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock,readonly \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml,readonly \
-    uv sync --frozen --no-install-project
+    uv sync --frozen --no-dev && \
+    find /app/.venv \( -type d -a \( -name test -o -name tests \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) -exec rm -rf '{}' \+
 
-# ------------------------------------------------------------------------------
-# Set PYTHONPATH so that the application code is discoverable.
-# ------------------------------------------------------------------------------
-ENV PYTHONPATH=/app
+# Copy only necessary app code
+COPY scripts ./scripts
+COPY app ./app
 
-# ------------------------------------------------------------------------------
-# Copy application-specific files:
-# - Scripts (if any)
-# - Dependency configuration files (pyproject.toml, uv.lock, alembic.ini)
-# - Application source code
-# ------------------------------------------------------------------------------
-COPY ./scripts /app/scripts
-COPY ./pyproject.toml ./uv.lock /app/
-COPY ./app /app/app
+# Stage 2: Runtime image
+FROM python:3.12-alpine
 
-# ------------------------------------------------------------------------------
-# Final synchronization: install project dependencises and compile the project.
-# this will pick up any changes in your source code or dependency configuration.
-# ------------------------------------------------------------------------------
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync -v
+WORKDIR /app
 
-# Expose the port
-EXPOSE 8000
+# Copy virtual environment and app code
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/app /app/app
+COPY --from=builder /app/scripts /app/scripts
 
+# Set environment variables
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH="/app"
 
-# command to run the application
-# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-CMD ["fastapi", "run", "--workers", "4", "app/main.py"]
-# CMD ["fastapi", "dev", "app/main.py"]
-
-
+CMD ["fastapi", "run", "--workers", "4", "app/main.py", "--port", "8000"]
