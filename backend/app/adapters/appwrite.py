@@ -12,7 +12,7 @@ class AppwriteAdapter:
         self.db.create_document(
             self.database_id,
             "spreadsheet",
-            spreadsheet.Spreadsheet_id,
+            spreadsheet.spreadsheet_id,
             data
         )
 
