@@ -16,7 +16,7 @@ class SheetServices:
     self.lock_adapter = lock_adapter
     self.in_memory_adapter = in_memory_adapter
 
-  async def createSpreadsheet(self, user_id: str) -> tuple[Spreadsheet, Sheet]:
+  async def createSpreadsheet(self, user_id: str) -> Tuple[Spreadsheet, Sheet]:
     alp = string.ascii_letters + string.digits + "-_" # Generate a 44-character Google Sheets-like ID
     spreadsheet_id = "".join(secrets.choice(alp) for _ in range(44))
 
@@ -48,7 +48,7 @@ class SheetServices:
     # await self.in_memory_adapter.save_spreadsheet(spreadsheet)
     # await self.in_memory_adapter.save_sheet(first_sheet)
     await self.db_adapter.save_spreadsheet(spreadsheet)
-    await self.db_adapter.save_sheet(first_sheet)
+    # await self.db_adapter.save_sheet(first_sheet)
 
     return (spreadsheet, first_sheet)
   

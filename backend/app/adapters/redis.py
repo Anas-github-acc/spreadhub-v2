@@ -1,5 +1,5 @@
 import inspect
-from redis.asyncio import Redis
+from redis import Redis
 from app.api.routes import spreadsheets
 from app.models.cell_lock import CellLock
 from app.models.models import CellData, Spreadsheet, Sheet
@@ -14,7 +14,8 @@ class RedisAdapter:
     async def save_spreadsheet(self, spreadsheet: Spreadsheet):
         key = f"spreadsheet:{spreadsheet.spreadsheet_id}"
         data = spreadsheet.model_dump()
-        self.redis.hset(key, mapping=data)
+        print(data)
+        # self.redis.hset(key, mapping=data)
 
 
     async def get_spreadsheet(self, spreadsheet_id: str, gid: int) -> Tuple[Spreadsheet, Sheet] | None:
@@ -39,9 +40,15 @@ class RedisAdapter:
         self.redis.hset(sheet_key, mapping=data)
 
         spreadsheet_key = f"spreadsheet:{sheet.spreadsheet_id}"
-        if inspect.isawaitable(rset := self.redis.hget(spreadsheet_key, "sheets")):
-            sheets_data = await rset
-        sheets = json.loads(sheets_data.decode() if isinstance(sheets_data, bytes) else sheets_data) if sheets_data else {}
+        
+        sheets_data = self.redis.hget(spreadsheet_key, "sheets")
+        if sheets_data:
+            if isinstance(sheets_data, bytes):
+                sheets = sheets_data.decode()
+            sheets = json.loads(sheets)
+        else:
+            sheets = {}
+        # sheets = json.loads(sheets_data.decode() if isinstance(sheets_data, bytes) else sheets_data) if sheets_data else {}
         sheets[sheet.sheet_id] = sheet_key
     
     

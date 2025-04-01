@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Response, Cookie
 from typing import Awaitable, Literal, Tuple
 
 from app.models.models import Spreadsheet, Sheet
-from app.api.main import sheet_service
+from app.core.services import sheet_service
 from app.models.api_models import reqSpreadsheetCreate
 
 
