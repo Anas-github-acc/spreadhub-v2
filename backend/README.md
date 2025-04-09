@@ -31,7 +31,20 @@ Run the development server:
 
 ```bash
 fastapi dev app/main.py
-# or run this instead
+```
+
+### or run this instead
+
+Linux/MacOS:
+
+```bash
+cmod +x dev
+dev
+```
+
+Windows:
+
+```bash
 ./dev
 ```
 
