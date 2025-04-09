@@ -1,4 +1,4 @@
-# Sheethub Backend
+# Spreadhub-v2 Backend
 
 FastAPI-based backend service for Sheethub project.
 
