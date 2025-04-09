@@ -1,8 +1,14 @@
+Dockerfile__
+
 # Python
-__pycache__
 app.egg-info
-*.pyc
 .mypy_cache
 .coverage
 htmlcov
-.venv
+
+.git
+*.md
+tests/
+__pycache__
+.venv/
+*.pyc

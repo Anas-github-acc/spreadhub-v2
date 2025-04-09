@@ -1,15 +1,17 @@
-# Sheethub Backend
+# Spreadhub-v2 Backend
 
 FastAPI-based backend service for Sheethub project.
 
-## Setup
+## Manually Setup & Run the Server
 
 1. Create a virtual environment:
+
 ```bash
 python -m venv .venv
 ```
 
 2. Activate the virtual environment:
+
 ```bash
 # On Windows
 .venv\Scripts\activate
@@ -18,21 +20,38 @@ source .venv/bin/activate
 ```
 
 3. Install dependencies:
+
 ```bash
-uv venv
-uv pip install -e .
+uv sync
 ```
 
 ## Development
 
 Run the development server:
+
 ```bash
-uvicorn app.main:app --reload
+fastapi dev app/main.py
+```
+
+### or run this instead
+
+Linux/MacOS:
+
+```bash
+chmod +x dev
+dev
+```
+
+Windows:
+
+```bash
+./dev
 ```
 
 ## Testing
 
 Run tests using pytest:
+
 ```bash
 pytest
 ```

@@ -1,7 +1,12 @@
 from fastapi import APIRouter, HTTPException
+from app.core.db import redis_client
 
 router = APIRouter()
 
-@router.get("/home", response_model=str)
-async def home() -> str:
-    return "Hello, world!"
+@router.get("/home")
+async def home():
+    redis_client.set('health', 'fine')
+    res = redis_client.get('health')
+    return {
+        "health": res
+    }
