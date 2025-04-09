@@ -87,7 +87,7 @@ class SheetProperties(BaseModel):
         "alpha": 1.0,
     }
     tab_color_style: Dict[str, Any] = {
-        "themeColor": Literal["THEME_COLOR_TYPE_UNSPECIFIED", "TEXT", "BACKGROUND", "ACCENT1", "ACCENT2", "ACCENT3", "ACCENT4", "ACCENT5", "ACCENT6", "LINK"],
+        "themeColor": "ACCENT1",
         "rgbColor": {
             "red": 1.0,
             "green": 1.0,
@@ -96,6 +96,10 @@ class SheetProperties(BaseModel):
     }
     right_to_left: bool = False
     data_source_sheet_properties: Dict[str, Any] | None = None
+
+    @property
+    def theme_color(self) -> Literal["THEME_COLOR_TYPE_UNSPECIFIED", "TEXT", "BACKGROUND", "ACCENT1", "ACCENT2", "ACCENT3", "ACCENT4", "ACCENT5", "ACCENT6", "LINK"]:
+        return self.tab_color_style["themeColor"]
 
 class SheetDeveloperMetadata(BaseModel):
     metadata_id: str
@@ -130,7 +134,7 @@ class SpreadsheetProperties(BaseModel):
 class Spreadsheet(BaseModel):
     spreadsheet_id: str = ''
     owner_id: str 
-    sheets: Dict[int, str] = {} # f"sheet:{sheet.spreadsheet_id}:{sheet.sheet_id}"
+    sheets: Dict[int, Sheet] = {} # f"sheet:{sheet.spreadsheet_id}:{sheet.sheet_id}"
     properties: SpreadsheetProperties | str = ''
     created_at: str = ''
     updated_at: str = ''

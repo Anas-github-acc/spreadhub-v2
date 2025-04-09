@@ -7,3 +7,8 @@ class reqSpreadsheetCreate(BaseModel):
 # class resSpreadsheetCreate(Spreadsheet, Sheet):
 #   def to_response(self):
 #     return (Spreadsheet, Sheet)
+
+class ErrorResponse(BaseModel):
+  status_code: int = 200
+  detail: str | None = None
+  header: dict | None = None

@@ -1,55 +1,87 @@
+from csv import Error
+import json
 import inspect
+from typing import Union, Dict, Any, Optional, Tuple
 from redis import Redis
 from app.api.routes import spreadsheets
 from app.models.cell_lock import CellLock
 from app.models.models import CellData, Spreadsheet, Sheet
-from typing import Tuple
-import json
+from app.models.api_models import ErrorResponse
+
 
 class RedisAdapter:
     def __init__(self, redis: Redis):
-        self.redis = redis
-
-    # spreadsheets methods
-    async def save_spreadsheet(self, spreadsheet: Spreadsheet):
-        key = f"spreadsheet:{spreadsheet.spreadsheet_id}"
-        data = spreadsheet.model_dump()
-        print(data)
-        # self.redis.hset(key, mapping=data)
+        self.redis: Redis = redis
 
 
-    async def get_spreadsheet(self, spreadsheet_id: str, gid: int) -> Tuple[Spreadsheet, Sheet] | None:
+    
+    async def save_spreadsheet(self, spreadsheet: Spreadsheet) -> None:
+        key: str = f"spreadsheet:{spreadsheet.spreadsheet_id}"
+        # data = json.dumps(spreadsheet.model_dump())
+        data: Dict[str, Any] = spreadsheet.model_dump()
+        self.redis.json().set(key, '$', data)
+        # self.redis.json().set(key, '$.sheets', [])
+
+
+    async def save_sheet(self, sheet: Sheet):
+        sheet_key: str = f"sheet:{sheet.spreadsheet_id}:{sheet.sheet_id}"
+        spreadsheet_key: str = f"spreadsheet:{sheet.spreadsheet_id}"
+        
+        last_index_raw: Optional[list] = self.redis.json().get(spreadsheet_key, '$.sheets[-1].properties.index')
+        last_index: int = last_index_raw[0] if last_index_raw and isinstance(last_index_raw, list) else 0
+
+        sheet.properties.title = f'Sheet{last_index + 1}'
+        sheet.properties.index = last_index + 1
+        
+        data: Dict[str, Any] = sheet.model_dump()
+        # self.redis.json().set(sheet_key, '$', data)
+
+        if(sheet.sheet_id != 0):
+            return ErrorResponse(
+                detail="sheet_id must not be zero",
+                status_code=400,
+            )
+
+        self.redis.json().set(spreadsheet_key, f"$.sheets.{sheet.sheet_id}", data)
+        return None
+
+
+
+    async def get_spreadsheet(self, spreadsheet_id: str, gid: int) -> Union[Spreadsheet, ErrorResponse]:
         key = f"spreadsheet:{spreadsheet_id}"
         # possible error (don't forget to changes this every where)
-        if inspect.isawaitable(rset := self.redis.hgetall(key)):
-            data = await rset
-        if not data:
-            return None
-        sheet_key = f"sheet:{spreadsheet_id}:{gid}"
-        if inspect.isawaitable(rset := self.redis.hgetall(sheet_key)):
-            sheet_data = await rset
-        if not sheet_data:
-            return None
         
-        return (Spreadsheet(**data), Sheet(**sheet_data))
-    
-    # sheet methods
-    async def save_sheet(self, sheet: Sheet):
-        sheet_key = f"sheet:{sheet.spreadsheet_id}:{sheet.sheet_id}"
-        data = sheet.model_dump()
-        self.redis.hset(sheet_key, mapping=data)
+        data_raw: Optional[list] = self.redis.json().mget( [
+            'spreadsheet_id',
+            'owner_id',
+            'properties',
+            'created_at',
+            'updated_at',
+            'is_public',
+            'is_deleted'
+        ], key)
 
-        spreadsheet_key = f"spreadsheet:{sheet.spreadsheet_id}"
+        if not data_raw or not isinstance(data_raw, list) or not data_raw[0]:
+            return ErrorResponse(
+                detail="no spreadsheet for given id"
+            )
         
-        sheets_data = self.redis.hget(spreadsheet_key, "sheets")
-        if sheets_data:
-            if isinstance(sheets_data, bytes):
-                sheets = sheets_data.decode()
-            sheets = json.loads(sheets)
-        else:
-            sheets = {}
-        # sheets = json.loads(sheets_data.decode() if isinstance(sheets_data, bytes) else sheets_data) if sheets_data else {}
-        sheets[sheet.sheet_id] = sheet_key
+        data: Dict[str, Any] = data_raw[0]
+        
+        sheet: Optional[list] = self.redis.json().get(f'{key}.sheets.{gid}')
+        if sheet and isinstance(sheet, list) and sheet[0]:
+            if "sheets" not in data:    
+                data["sheets"] = {}
+            data["sheets"][gid] = sheet[0]
+
+        try:
+            return Spreadsheet.model_validate(data)
+        except ValueError as e:
+            return ErrorResponse(
+                detail="invalide Spreadsheet data",
+                status_code=500,
+            )
+        
     
     
     # lock cell methods
@@ -64,9 +96,14 @@ class RedisAdapter:
         }
         self.redis.hset(key, mapping=mapping)
 
+
+
     async def unlock_cell(self, sheet_id: str, cell_id: str):
         key = f"lock:{sheet_id}:{cell_id}"
         self.redis.delete(key)
+
+
+        
 
     async def get_cell_lock(self, sheet_id: str, cell_id: str) -> CellLock | None:
         key = f"lock:{sheet_id}:{cell_id}"
