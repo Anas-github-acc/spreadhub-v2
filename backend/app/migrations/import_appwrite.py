@@ -7,7 +7,7 @@ from typing import List, Dict
 async def import_appwrite(db: Databases, data: List[Dict]):
   for item in data:
     db.create_document(
-      DATABASE_ID, "spradsheets",
+      DATABASE_ID, "spreadsheets",
       item["spreadsheet_id"],
       item
     )
