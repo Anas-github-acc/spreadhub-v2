@@ -1,9 +1,8 @@
-from app.core.db import redis_client, appwrite_db, DATABASE_ID
-from app.adapters.redis import RedisAdapter
 # from app.adapters.appwrite import AppwriteAdapter
 from app.adapters.duckdb import DuckDBAdapter
+from app.adapters.redis import RedisAdapter
+from app.core.db import redis_client
 from app.services.sheets import SheetServices
-
 
 # db_adapter = AppwriteAdapter(appwrite_db, DATABASE_ID)
 db_adapter = RedisAdapter(redis_client)

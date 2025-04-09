@@ -1,5 +1,7 @@
 from appwrite.services.databases import Databases
+
 from app.models.models import Spreadsheet
+
 
 class AppwriteAdapter:
     def __init__(self, db: Databases, database_id: str):
@@ -10,10 +12,7 @@ class AppwriteAdapter:
         data = spreadsheet.model_dump()
         data["owner_id"] = str(spreadsheet.owner_id)
         self.db.create_document(
-            self.database_id,
-            "spreadsheet",
-            spreadsheet.spreadsheet_id,
-            data
+            self.database_id, "spreadsheet", spreadsheet.spreadsheet_id, data
         )
 
     async def get_spreadsheet(self, spreadsheet_id: str) -> Spreadsheet:

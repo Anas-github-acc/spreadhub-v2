@@ -1,10 +1,10 @@
 import duckdb
-from app.models.models import Spreadsheet, Sheet
+
 
 class DuckDBAdapter:
     def __init__(self, db_path: str = ":memory:"):
         self.conn = duckdb.connect(db_path)
-        with open("app/db_schema/duckdb_schema.sql", "r") as f:
+        with open("app/db_schema/duckdb_schema.sql") as f:
             self.conn.execute(f.read())
 
     # async def save_spreadsheet(self, spreadsheet: Spreadsheet):

@@ -1,15 +1,13 @@
 import secrets
 from typing import Annotated, Any, Literal
 
-from pydantic import (
-    AnyUrl,
-    BeforeValidator,
-    HttpUrl,
-    computed_field
-)
+from pydantic import AnyUrl, BeforeValidator, HttpUrl, computed_field
+
 # from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 # from typing_extensions import Self
+
 
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
@@ -47,7 +45,6 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     SENTRY_DSN: HttpUrl | None = None
 
-
     # Redis Settings
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
@@ -66,4 +63,4 @@ class Settings(BaseSettings):
         return f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/0"
 
 
-settings = Settings() # type: ignore
+settings = Settings()  # type: ignore

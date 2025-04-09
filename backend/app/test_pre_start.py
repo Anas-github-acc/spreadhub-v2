@@ -1,2 +1,2 @@
-if __name__=="__main__":
-  print("nothing to do...")
+if __name__ == "__main__":
+    print("nothing to do...")
