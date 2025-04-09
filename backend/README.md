@@ -38,7 +38,7 @@ fastapi dev app/main.py
 Linux/MacOS:
 
 ```bash
-cmod +x dev
+chmod +x dev
 dev
 ```
 

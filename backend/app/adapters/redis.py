@@ -9,6 +9,7 @@ from app.models.models import CellData, Spreadsheet, Sheet
 from app.models.api_models import ErrorResponse
 
 
+
 class RedisAdapter:
     def __init__(self, redis: Redis):
         self.redis: Redis = redis
@@ -36,13 +37,14 @@ class RedisAdapter:
         data: Dict[str, Any] = sheet.model_dump()
         # self.redis.json().set(sheet_key, '$', data)
 
-        if(sheet.sheet_id != 0):
-            return ErrorResponse(
+        if(sheet.sheet_id == 0):
+            raise ErrorResponse(
                 detail="sheet_id must not be zero",
                 status_code=400,
             )
 
         self.redis.json().set(spreadsheet_key, f"$.sheets.{sheet.sheet_id}", data)
+        print("done...", sheet.sheet_id)
         return None
 
 
@@ -50,36 +52,55 @@ class RedisAdapter:
     async def get_spreadsheet(self, spreadsheet_id: str, gid: int) -> Union[Spreadsheet, ErrorResponse]:
         key = f"spreadsheet:{spreadsheet_id}"
         # possible error (don't forget to changes this every where)
-        
-        data_raw: Optional[list] = self.redis.json().mget( [
-            'spreadsheet_id',
-            'owner_id',
-            'properties',
-            'created_at',
-            'updated_at',
-            'is_public',
-            'is_deleted'
-        ], key)
+        # data2 = self.redis.json().get(key, '$')
+        data_raw: Optional[list] = self.redis.json().get(
+            key,
+            '$.spreadsheet_id',
+            '$.owner_id',
+            '$.properties',
+            '$.created_at',
+            '$.updated_at',
+            '$.is_public',
+            '$.is_deleted'
+        )
 
-        if not data_raw or not isinstance(data_raw, list) or not data_raw[0]:
+        if not data_raw or not isinstance(data_raw, list | Dict ):
             return ErrorResponse(
-                detail="no spreadsheet for given id"
+                detail="no spreadsheet for given id",
+                status_code=404
             )
         
-        data: Dict[str, Any] = data_raw[0]
-        
-        sheet: Optional[list] = self.redis.json().get(f'{key}.sheets.{gid}')
+        data: Dict[str, Any] = {
+            "spreadsheet_id": data_raw.get("$.spreadsheet_id", [None])[0],
+            "owner_id": data_raw.get("$.owner_id", [None])[0],
+            "properties": data_raw.get("$.properties", [None])[0],
+            "created_at": data_raw.get("$.created_at", [None])[0],
+            "updated_at": data_raw.get("$.updated_at", [None])[0],
+            "is_public": data_raw.get("$.is_public", [False])[0],
+            "is_deleted": data_raw.get("$.is_deleted", [False])[0],
+            "sheets": {},
+        } if isinstance(data_raw, Dict) else data_raw[0]
+
+        sheet: Optional[list] = self.redis.json().get(key, f'$.sheets.{gid}')
+
         if sheet and isinstance(sheet, list) and sheet[0]:
             if "sheets" not in data:    
                 data["sheets"] = {}
             data["sheets"][gid] = sheet[0]
 
+        if gid not in data["sheets"]:
+            raise ErrorResponse(
+                detail="no sheet for given id",
+                status_code=404
+            )
+        data["sheets"] = {gid: data["sheets"][gid]}
+
         try:
             return Spreadsheet.model_validate(data)
         except ValueError as e:
             return ErrorResponse(
-                detail="invalide Spreadsheet data",
-                status_code=500,
+                detail="failed to parse spreadsheet data",
+                status_code=500
             )
         
     
