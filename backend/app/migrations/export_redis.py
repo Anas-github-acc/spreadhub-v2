@@ -18,7 +18,7 @@ async def export_redis(redis: Redis) -> List[Dict]:
         "locale": decoded["locale"],
         "time_zone": decoded["time_zone"],
         "auto_recalc": decoded["auto_recalc"],
-        "default_format": eval(decoded["default_format"]),  # Adjust if JSON
+        "default_format": json.loads(decoded["default_format"]),  # Adjusted to use json.loads
         "created_at": decoded["created_at"],
         "updated_at": decoded["updated_at"],
         "is_public": decoded["is_public"] == "true",
