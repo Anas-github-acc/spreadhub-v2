@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     def redis_url(self) -> str:
         auth = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
         return f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+    
+
+    CLERK_SECRET_KEY: str = ""
 
 
 settings = Settings()  # type: ignore

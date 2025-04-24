@@ -8,10 +8,12 @@ from app.core.services import sheet_service
 from app.models.api_models import (
     ErrorResponse,
     ErrorResponseModel,
-    reqSheetCreate,
-    reqSpreadsheetCreate,
 )
 from app.models.models import Sheet, Spreadsheet
+from app.auth import clerkClient
+
+router = APIRouter()
+
 
 router = APIRouter()
 
@@ -45,9 +47,9 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         500: {"model": ErrorResponseModel, "description": "Server error"},
     },
 )
-async def create_spreadsheet(req: reqSpreadsheetCreate) -> Spreadsheet:
+async def create_spreadsheet(user: dict[str, Any] = Depends(get_current_user)) -> Spreadsheet:
     try:
-        user_id = req.user_id
+        user_id = user["user_id"]
         spreadsheet_data: Spreadsheet = await sheet_service.createSpreadsheet(user_id)
         return spreadsheet_data
     except ErrorResponse as e:
@@ -67,9 +69,9 @@ async def create_spreadsheet(req: reqSpreadsheetCreate) -> Spreadsheet:
         500: {"model": ErrorResponseModel, "description": "Server error"},
     },
 )
-async def create_sheet(req: reqSheetCreate, spreadsheet_id: str) -> Sheet:
+async def create_sheet(spreadsheet_id: str, user: dict[str, Any] = Depends(get_current_user)) -> Sheet:
     try:
-        user_id = req.user_id
+        user_id = user["user_id"]
         sheet_data: Sheet = await sheet_service.createSheet(spreadsheet_id, user_id)
         return sheet_data
     except ErrorResponse as e:
