@@ -2,11 +2,10 @@ from pydantic import BaseModel
 
 
 class reqSpreadsheetCreate(BaseModel):
-    user_id: str
-
+    pass
 
 class reqSheetCreate(BaseModel):
-    user_id: str
+    pass
 
 
 class ErrorResponseModel(BaseModel):

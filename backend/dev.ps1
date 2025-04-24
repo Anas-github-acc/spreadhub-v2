@@ -37,7 +37,7 @@ if (Test-Path ".venv") {
 } else {
     Write-Host "$username, Bro you do not have a virtual environment set up yet. so i have to create one and then install the dependencies... such a pain in ass"
     Write-Host "while i am Creating a virtual environment...,you understand this when ever you have to  run ./dev.sh to run the server"
-    uv .venv
+    uv venv
     . .\.venv\Scripts\activate
     uv sync
 }
